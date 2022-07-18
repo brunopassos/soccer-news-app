@@ -4,25 +4,48 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.example.soccernews.data.remote.SoccerNewsApi;
 import com.example.soccernews.domain.News;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
 public class NewsViewModel extends ViewModel {
 
-    private final MutableLiveData<List<News>> news;
+    private final MutableLiveData<List<News>> news = new MutableLiveData<>();
+    private final SoccerNewsApi api;
 
     public NewsViewModel() {
-        this.news = new MutableLiveData<>();
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("https://brunopassos.github.io/soccer-news-api/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        api = retrofit.create(SoccerNewsApi.class);
+        this.findNews();
+    }
 
-        //TODO remover mock de notícias
-        List<News> news = new ArrayList<>();
-        news.add(new News("Ferroviária tem desfalque imporntante.", "Integer at mollis metus. Cras vitae dui massa. Cras id sem consequat, feugiat massa a, blandit odio. Maecenas hendrerit id quam non egestas. Aliquam erat volutpat. Nulla facilisi. Donec tincidunt placerat lobortis. "));
-        news.add(new News("Ferrinha joga no sábado.", "Integer at mollis metus. Cras vitae dui massa. Cras id sem consequat, feugiat massa a, blandit odio. Maecenas hendrerit id quam non egestas. Aliquam erat volutpat. Nulla facilisi. Donec tincidunt placerat lobortis. "));
-        news.add(new News("Copa do mundo feminina está terminando.", "Integer at mollis metus. Cras vitae dui massa. Cras id sem consequat, feugiat massa a, blandit odio. Maecenas hendrerit id quam non egestas. Aliquam erat volutpat. Nulla facilisi. Donec tincidunt placerat lobortis. "));
+    private void findNews() {
+        api.getNews().enqueue(new Callback<List<News>>() {
+            @Override
+            public void onResponse(Call<List<News>> call, Response<List<News>> response) {
+                if(response.isSuccessful()){
+                    news.setValue(response.body());
+                }else {
 
-        this.news.setValue(news);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<News>> call, Throwable t) {
+
+            }
+        });
     }
 
     public LiveData<List<News>> getNews() {
